@@ -1,0 +1,9 @@
+# dsh-ollama-credits — loader rows.
+#
+# The host half is an ordinary Loader row: it polls the Ollama Cloud API and
+# registers the JSON routes under /api/dsh-ollama-credits. The browser half is
+# NOT declared here — the client-module system discovers it from package.json's
+# `dsh.client` + `exports["./client"]` declarations alone.
+- insert:
+    - id: dsh-ollama-credits
+      name: 'dsh-ollama-credits'

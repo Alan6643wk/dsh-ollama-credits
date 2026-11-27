@@ -1,0 +1,50 @@
+{
+  "name": "dsh-ollama-credits",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ollama Cloud credit monitor for the DSH Web GUI: session/weekly balance with reset timers, hourly usage, per-model breakdown, and a JSON status endpoint for agents.",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "CONTRACT.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-renderer"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node --check lib/index.js && node --check lib/client.js && node --check build.mjs",
+    "verify": "node verify/run.mjs"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "engines": {
+    "dsh": ">=0.2.1-rc.2"
+  },
+  "author": "Alan6643wk"
+}
