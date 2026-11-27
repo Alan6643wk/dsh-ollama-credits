@@ -77,11 +77,15 @@ no `@deepseek-ai/*` import is allowed in the host file.
 | `lowWeeklyPct` | `10` | weekly remaining percent that counts as "low" |
 | `stateDir` | `$DSH_HOME/ollama-credits` | persistence dir (`state.json`) |
 
-Credential resolution order (pure function, §6 `resolveApiKey`):
+Credential resolution order (pure function, §6 `resolveApiKey`), matching the
+harness's own credential seam (`dsh-credentials-local`: a value saved through the GUI
+wins over a stale launch environment):
 1. `config.apiKey` literal (tests only),
-2. `process.env[apiKeyEnv]`,
-3. `$DSH_HOME/.credentials.yaml` → `refs[apiKeyEnv]` (strip one layer of quotes),
+2. `$DSH_HOME/.credentials.yaml` → `refs[apiKeyEnv]` (strip one layer of quotes),
+3. `process.env[apiKeyEnv]`,
 4. `$DSH_HOME/.env`, then `<cwd>/.env` lines `NAME=value` (strip quotes).
+Return shape `{ key, source }` with `source` one of
+`config|credentials-file|env|dsh-env-file|cwd-env-file|missing`.
 Missing → poll records `lastError: "missing_credential"` and the routes still answer
 `ok:false` with `status:"no-credential"`; the plugin must never throw out of `apply`.
 
@@ -302,14 +306,37 @@ light and dark both read. Text must be English. No console errors.
 `web` (:3080) is production and must not be touched.
 
 ```bash
-cd ~/.dsh/profiles/opcheck
 dsh plugin --profile opcheck add link:/Users/alan/Workspace/projects/dsh-ollama-credits
-# add the row to profile cordis.patch.yml (insert: id dsh-ollama-credits, name same)
-dsh opcheck   # boots :3081, run as a background job
+# that command writes the link dependency AND appends "dsh-ollama-credits" to
+# dsh.profile.bundles, so this package's own bundle patch inserts the loader row;
+# no manual cordis.patch.yml row is needed.
 ```
 
-Verify with `curl -s localhost:3081/api/dsh-ollama-credits/overview`, then the GUI with
-Playwright. Screenshots go to `/Users/alan/Workspace/screenshots/`.
+**Launcher-env rule (measured 2026-11-27).** `dsh` refuses to start at all when
+`$DSH_HOME/.env` contains a key only the launch environment may set — e.g.
+`DSH_TELEMETRY_DISABLED`: `… sets "DSH_TELEMETRY_DISABLED", which only the launching
+environment may set; export DSH_TELEMETRY_DISABLED instead of putting it in a .env
+file`. On this machine `~/.dsh/.env` carries that key, so a fresh `dsh opcheck` (or any
+`dsh …`) exits 1 before booting. Until the line is removed from that file and the
+variable is exported by whatever launches dsh, acceptance runs against a **workspace
+clone** of the profile instead:
+
+```bash
+WS=/Users/alan/Workspace/tmp/opcheck-home
+mkdir -p "$WS/profiles/opcheck"
+cp ~/.dsh/profiles/opcheck/{package.json,cordis.patch.yml,cordis.yml,compatibility.json,pnpm-lock.yaml,pnpm-workspace.yaml} "$WS/profiles/opcheck/"
+ln -s ~/.dsh/profiles/opcheck/node_modules "$WS/profiles/opcheck/node_modules"
+ln -s ~/.dsh/.credentials.yaml "$WS/.credentials.yaml"
+DSH_HOME="$WS" dsh opcheck --no-open     # same bundles, same :3081 loopback, workspace state
+```
+
+Differences in that mode: plugin state/config live under `$WS/ollama-credits`, and
+plugins that hard-code `~/.dsh` paths (comm-bridge) log EPERM noise. The plugin's own
+routes, client bundle, port and cloud calls are identical.
+
+Verify with `curl -s 127.0.0.1:3081/api/dsh-ollama-credits/overview`, then the GUI with
+Playwright (`http://127.0.0.1:3081/?token=…` once per host process). Screenshots go to
+`/Users/alan/Workspace/screenshots/`.
 
 ## 8. Known limits
 
