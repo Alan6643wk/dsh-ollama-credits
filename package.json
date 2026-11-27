@@ -1,6 +1,6 @@
 {
   "name": "dsh-ollama-credits",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Ollama Cloud credit monitor for the DeepSeek Harness (DSH) Web GUI: session/weekly balance with reset timers, hourly usage, per-model breakdown, and JSON status routes for agents.",
   "license": "MIT",

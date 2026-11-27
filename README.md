@@ -66,17 +66,19 @@ npm run verify            # acceptance harness (build + 94 host + 75 route check
 concatenated into one module-loader bundle. Interfaces are frozen in
 [CONTRACT.md](CONTRACT.md).
 
-Live GUI acceptance runs in a scratch profile, never in `web`:
+Install it the way any DSH plugin is installed, then restart the profile:
 
 ```bash
-dsh plugin --profile opcheck add link:$PWD
-DSH_HOME=<cloned dsh home> dsh opcheck --no-open   # :3081 loopback
-node scripts/live-accept.mjs                       # routes vs a direct cloud call
+dsh plugin --profile web add link:$PWD     # or: add dsh-ollama-credits
 ```
 
-CONTRACT §7 documents the profile procedure and the DSH launcher rule that forces the
-workspace `DSH_HOME` clone on this machine (`$DSH_HOME/.env` must not contain
-launch-environment-only keys such as `DSH_TELEMETRY_DISABLED`).
+Live acceptance runs against the running profile:
+
+```bash
+node scripts/live-accept.mjs               # routes vs a direct cloud call
+```
+
+CONTRACT §7 has the full procedure and §4 freezes the route schemas.
 
 ## Known limits
 

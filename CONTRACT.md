@@ -20,8 +20,8 @@ Measured facts this contract is built on (2026-11-27, live account):
   **Legacy plans report `request_count` only** — no USD, no tokens. At most 10 groups,
   overflow folded into `remainder`.
 * Rate limit: 10 requests/minute per user across all keys. One poll cycle = 4 calls.
-* The key lives in the DSH credential store at `$DSH_HOME/.credentials.yaml` under
-  `refs: { <ENV_NAME>: <secret> }` (`OLLAMA_CLOUD_API_KEY` on this machine); the launch
+* The key is resolved from the DSH credential store under the `OLLAMA_CLOUD_API_KEY`
+  reference — the same credential the `ollama-cloud` provider uses; the launch
   environment and `.env` files are fallbacks.
 
 ---
@@ -81,7 +81,7 @@ Credential resolution order (pure function, §6 `resolveApiKey`), matching the
 harness's own credential seam (`dsh-credentials-local`: a value saved through the GUI
 wins over a stale launch environment):
 1. `config.apiKey` literal (tests only),
-2. `$DSH_HOME/.credentials.yaml` → `refs[apiKeyEnv]` (strip one layer of quotes),
+2. the DSH credential store (file-backed `refs[apiKeyEnv]`, one layer of quotes stripped),
 3. `process.env[apiKeyEnv]`,
 4. `$DSH_HOME/.env`, then `<cwd>/.env` lines `NAME=value` (strip quotes).
 Return shape `{ key, source }` with `source` one of
@@ -297,46 +297,29 @@ light and dark both read. Text must be English. No console errors.
 3. Route tests: call `apply` with a fake `ctx` capturing registrations, then drive
    each handler over a real `node:http` server; assert §4 schemas, 400/405 paths, and
    that `POST config` persists.
-4. Live acceptance in the `opcheck` profile (see §7): curl every route on
-   `127.0.0.1:3081` and compare `/status` numbers with a direct cloud call.
+4. Live acceptance in a running profile (see §7): curl every route on the profile's
+   loopback port and compare `/status` numbers with a direct cloud call.
 
-## 7. Dev profile procedure (approved)
+## 7. Profile procedure
 
-`opcheck` is the dev surface (`~/.dsh/profiles/opcheck`, port **3081**, loopback).
-`web` (:3080) is production and must not be touched.
-
-```bash
-dsh plugin --profile opcheck add link:<checkout>
-# that command writes the link dependency AND appends "dsh-ollama-credits" to
-# dsh.profile.bundles, so this package's own bundle patch inserts the loader row;
-# no manual cordis.patch.yml row is needed.
-```
-
-**Launcher-env rule (measured 2026-11-27).** `dsh` refuses to start at all when
-`$DSH_HOME/.env` contains a key only the launch environment may set — e.g.
-`DSH_TELEMETRY_DISABLED`: `… sets "DSH_TELEMETRY_DISABLED", which only the launching
-environment may set; export DSH_TELEMETRY_DISABLED instead of putting it in a .env
-file`. On this machine `~/.dsh/.env` carries that key, so a fresh `dsh opcheck` (or any
-`dsh …`) exits 1 before booting. Until the line is removed from that file and the
-variable is exported by whatever launches dsh, acceptance runs against a **workspace
-clone** of the profile instead:
+Profiles live under `$DSH_HOME/profiles/<profile>`. The standard profile is **`web`**
+(loopback `127.0.0.1:3080`, or the deployment's own trusted origin; `dsh web`).
 
 ```bash
-WS=~/dsh-home-clone
-mkdir -p "$WS/profiles/opcheck"
-cp ~/.dsh/profiles/opcheck/{package.json,cordis.patch.yml,cordis.yml,compatibility.json,pnpm-lock.yaml,pnpm-workspace.yaml} "$WS/profiles/opcheck/"
-ln -s ~/.dsh/profiles/opcheck/node_modules "$WS/profiles/opcheck/node_modules"
-ln -s ~/.dsh/.credentials.yaml "$WS/.credentials.yaml"
-DSH_HOME="$WS" dsh opcheck --no-open     # same bundles, same :3081 loopback, workspace state
+# npm install (the normal path)
+dsh plugin --profile web add dsh-ollama-credits
+
+# from a checkout during development
+dsh plugin --profile web add link:<checkout>
 ```
 
-Differences in that mode: plugin state/config live under `$WS/ollama-credits`, and
-plugins that hard-code `~/.dsh` paths (comm-bridge) log EPERM noise. The plugin's own
-routes, client bundle, port and cloud calls are identical.
+`dsh plugin add` writes the dependency AND appends the package name to
+`dsh.profile.bundles`, so this package's own bundle patch inserts the loader row — no
+manual `cordis.patch.yml` row is needed. Restart the profile (`dsh web`) and refresh
+the browser for the client half.
 
-Verify with `curl -s 127.0.0.1:3081/api/dsh-ollama-credits/overview`, then the GUI with
-Playwright (`http://127.0.0.1:3081/?token=…` once per host process). Screenshots go to
-`<workspace>/screenshots/`.
+Acceptance for a release: `npm run verify` for the offline harness, then the live
+routes and GUI of the running profile (§6).
 
 ## 8. Known limits
 
