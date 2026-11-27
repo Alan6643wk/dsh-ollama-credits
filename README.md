@@ -15,8 +15,9 @@ Ollama and never writes to the Ollama account.
 ## Install (profile)
 
 ```bash
-cd ~/.dsh/profiles/<profile>
-dsh plugin --profile <profile> add link:/Users/alan/Workspace/projects/dsh-ollama-credits
+dsh plugin --profile <profile> add dsh-ollama-credits
+# local development / unpublished checkout:
+# dsh plugin --profile <profile> add link:$PWD
 ```
 
 The plugin's bundle patch inserts the loader row itself. Restart the host (`dsh <profile>`)
@@ -68,7 +69,7 @@ concatenated into one module-loader bundle. Interfaces are frozen in
 Live GUI acceptance runs in a scratch profile, never in `web`:
 
 ```bash
-dsh plugin --profile opcheck add link:/Users/alan/Workspace/projects/dsh-ollama-credits
+dsh plugin --profile opcheck add link:$PWD
 DSH_HOME=<cloned dsh home> dsh opcheck --no-open   # :3081 loopback
 node scripts/live-accept.mjs                       # routes vs a direct cloud call
 ```

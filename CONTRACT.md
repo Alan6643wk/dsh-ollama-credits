@@ -306,7 +306,7 @@ light and dark both read. Text must be English. No console errors.
 `web` (:3080) is production and must not be touched.
 
 ```bash
-dsh plugin --profile opcheck add link:/Users/alan/Workspace/projects/dsh-ollama-credits
+dsh plugin --profile opcheck add link:<checkout>
 # that command writes the link dependency AND appends "dsh-ollama-credits" to
 # dsh.profile.bundles, so this package's own bundle patch inserts the loader row;
 # no manual cordis.patch.yml row is needed.
@@ -322,7 +322,7 @@ variable is exported by whatever launches dsh, acceptance runs against a **works
 clone** of the profile instead:
 
 ```bash
-WS=/Users/alan/Workspace/tmp/opcheck-home
+WS=~/dsh-home-clone
 mkdir -p "$WS/profiles/opcheck"
 cp ~/.dsh/profiles/opcheck/{package.json,cordis.patch.yml,cordis.yml,compatibility.json,pnpm-lock.yaml,pnpm-workspace.yaml} "$WS/profiles/opcheck/"
 ln -s ~/.dsh/profiles/opcheck/node_modules "$WS/profiles/opcheck/node_modules"
@@ -336,7 +336,7 @@ routes, client bundle, port and cloud calls are identical.
 
 Verify with `curl -s 127.0.0.1:3081/api/dsh-ollama-credits/overview`, then the GUI with
 Playwright (`http://127.0.0.1:3081/?token=…` once per host process). Screenshots go to
-`/Users/alan/Workspace/screenshots/`.
+`<workspace>/screenshots/`.
 
 ## 8. Known limits
 
